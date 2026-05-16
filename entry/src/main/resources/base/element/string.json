@@ -1,0 +1,28 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "工业巡检拍照"
+    },
+    {
+      "name": "camera_reason",
+      "value": "用于拍摄巡检照片"
+    },
+    {
+      "name": "read_imagevideo_reason",
+      "value": "用于读取已保存的巡检照片"
+    },
+    {
+      "name": "write_imagevideo_reason",
+      "value": "用于保存巡检照片到系统相册"
+    }
+  ]
+}

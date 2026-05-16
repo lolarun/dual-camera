@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf /c/Users/Justin/codes/repos/hmos/docs/harmonyos-api/*)",
+      "Bash(git clone *)"
+    ]
+  }
+}
