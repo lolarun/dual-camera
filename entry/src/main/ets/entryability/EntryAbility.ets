@@ -1,48 +1,72 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { DBService } from '../services/DBService';
+import { PreferencesService } from '../services/PreferencesService';
 
 const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     try {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     } catch (err) {
-      hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
+      hilog.error(DOMAIN, 'EntryAbility', 'setColorMode failed: %{public}s', JSON.stringify(err));
     }
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+
+    // Initialize DB and Preferences before any page loads
+    try {
+      await DBService.getInstance().init(this.context);
+      hilog.info(DOMAIN, 'EntryAbility', 'DBService initialized');
+    } catch (err) {
+      const e = err as BusinessError;
+      hilog.error(DOMAIN, 'EntryAbility', 'DBService init failed: %{public}s %{public}s', e.code.toString(), e.message);
+    }
+
+    try {
+      await PreferencesService.getInstance().init(this.context);
+      hilog.info(DOMAIN, 'EntryAbility', 'PreferencesService initialized');
+    } catch (err) {
+      const e = err as BusinessError;
+      hilog.error(DOMAIN, 'EntryAbility', 'PreferencesService init failed: %{public}s %{public}s', e.code.toString(), e.message);
+    }
   }
 
   onDestroy(): void {
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
+    hilog.info(DOMAIN, 'EntryAbility', 'Ability onDestroy');
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
-    // Main window is created, set main page for this ability
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
+    hilog.info(DOMAIN, 'EntryAbility', 'Ability onWindowStageCreate');
 
-    windowStage.loadContent('pages/Index', (err) => {
+    // Lock orientation to landscape for the MatePad Pro
+    windowStage.getMainWindow().then((win: window.Window) => {
+      win.setPreferredOrientation(window.Orientation.LANDSCAPE).catch((err: BusinessError) => {
+        hilog.error(DOMAIN, 'EntryAbility', 'setOrientation failed: %{public}s', err.message);
+      });
+    }).catch((err: BusinessError) => {
+      hilog.error(DOMAIN, 'EntryAbility', 'getMainWindow failed: %{public}s', err.message);
+    });
+
+    windowStage.loadContent('pages/HomePage', (err) => {
       if (err.code) {
-        hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
+        hilog.error(DOMAIN, 'EntryAbility', 'Failed to load content: %{public}s', JSON.stringify(err));
         return;
       }
-      hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
+      hilog.info(DOMAIN, 'EntryAbility', 'Content loaded successfully');
     });
   }
 
   onWindowStageDestroy(): void {
-    // Main window is destroyed, release UI related resources
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageDestroy');
+    hilog.info(DOMAIN, 'EntryAbility', 'Ability onWindowStageDestroy');
   }
 
   onForeground(): void {
-    // Ability has brought to foreground
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
+    hilog.info(DOMAIN, 'EntryAbility', 'Ability onForeground');
   }
 
   onBackground(): void {
-    // Ability has back to background
-    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
+    hilog.info(DOMAIN, 'EntryAbility', 'Ability onBackground');
   }
 }

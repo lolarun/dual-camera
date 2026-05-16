@@ -1,5 +1,12 @@
 {
   "src": [
-    "pages/Index"
+    "pages/HomePage",
+    "pages/MetadataFormPage",
+    "pages/EllipseDrawPage",
+    "pages/CameraCapturePage",
+    "pages/PostCaptureReviewPage",
+    "pages/HistoryListPage",
+    "pages/WorkLogPage",
+    "pages/TaskPhotoDetailPage"
   ]
 }
