@@ -18,23 +18,33 @@ async function composeImageTask(
   photographer: string,
   photoDate: string
 ): Promise<ArrayBuffer> {
-  const backSource   = image.createImageSource(backBuffer);
-  const backPixelMap = await backSource.createPixelMap({
-    editable: false,
-    desiredPixelFormat: image.PixelMapFormat.RGBA_8888,
-  });
-  backSource.release();
+  let W: number = 1920;
+  let H: number = 1080;
+  let backPixelMap: image.PixelMap | null = null;
 
-  const backInfo = await backPixelMap.getImageInfo();
-  const W = backInfo.size.width;
-  const H = backInfo.size.height;
+  if (backBuffer.byteLength > 0) {
+    const backSource = image.createImageSource(backBuffer);
+    backPixelMap = await backSource.createPixelMap({
+      editable: false,
+      desiredPixelFormat: image.PixelMapFormat.RGBA_8888,
+    });
+    backSource.release();
+    const backInfo = await backPixelMap.getImageInfo();
+    W = backInfo.size.width;
+    H = backInfo.size.height;
+  }
 
   const offscreen = new OffscreenCanvas(W, H);
   const ctx = offscreen.getContext('2d') as OffscreenCanvasRenderingContext2D;
 
-  // PixelMap is accepted directly by drawImage in HarmonyOS
-  ctx.drawImage(backPixelMap, 0, 0, W, H);
-  backPixelMap.release();
+  if (backPixelMap !== null) {
+    ctx.drawImage(backPixelMap, 0, 0, W, H);
+    backPixelMap.release();
+  } else {
+    // No camera image — black placeholder for preview/test
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+  }
 
   // PIP overlay (frontBuffer.byteLength > 0 means PIP data present)
   if (frontBuffer.byteLength > 0) {

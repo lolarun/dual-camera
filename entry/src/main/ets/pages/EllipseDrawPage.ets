@@ -149,21 +149,11 @@ struct EllipseDrawPage {
   }
 
   private navigateToCamera(): void {
-    const topEllipse = this.ellipseStack.length > 0
-      ? this.ellipseStack[this.ellipseStack.length - 1]
-      : new EllipseData();
-
     router.pushUrl({
       url: 'pages/CameraCapturePage',
       params: {
-        formDataJson: this.formDataJson,
-        ellipseDataJson: JSON.stringify({
-          centerX:  topEllipse.centerX,
-          centerY:  topEllipse.centerY,
-          radiusX:  topEllipse.radiusX,
-          radiusY:  topEllipse.radiusY,
-          rotation: topEllipse.rotation,
-        }),
+        formDataJson:    this.formDataJson,
+        ellipseDataJson: JSON.stringify(this.ellipseStack),
       },
     });
   }

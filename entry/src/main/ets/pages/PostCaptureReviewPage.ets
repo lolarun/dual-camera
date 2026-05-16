@@ -76,10 +76,10 @@ struct PostCaptureReviewPage {
     this.isComposing = true;
     this.composeFailed = false;
     try {
-      // Use a placeholder image since we pass images via CameraService singleton
-      // In production: CameraService holds last captured buffers
-      const backBuffer = new ArrayBuffer(0);
-      const frontBuffer: ArrayBuffer | null = null;
+      const backBuffer  = CameraService.getLastBackBuffer();
+      const frontBuffer: ArrayBuffer | null = CameraService.getLastFrontBuffer().byteLength > 0
+        ? CameraService.getLastFrontBuffer()
+        : null;
 
       const pixelMap = await ImageCompositionService.composePreview(
         backBuffer, frontBuffer, this.formData
@@ -104,8 +104,10 @@ struct PostCaptureReviewPage {
 
       // Compose final JPEG
       this.saveProgress = 10;
-      const backBuffer = new ArrayBuffer(0);
-      const frontBuffer: ArrayBuffer | null = null;
+      const backBuffer  = CameraService.getLastBackBuffer();
+      const frontBuffer: ArrayBuffer | null = CameraService.getLastFrontBuffer().byteLength > 0
+        ? CameraService.getLastFrontBuffer()
+        : null;
       const composedBuffer = await ImageCompositionService.composeImage(
         backBuffer, frontBuffer, this.formData
       );

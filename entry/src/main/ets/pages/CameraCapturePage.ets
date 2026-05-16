@@ -2,7 +2,7 @@ import { router } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { AppColors, AppFontSize, AppSize, AppSpacing } from '../common/constants/DesignTokens';
-import { FormData, CaptureResult, CameraSource } from '../common/types/InspectionTypes';
+import { FormData, CaptureResult, CameraSource, EllipseData } from '../common/types/InspectionTypes';
 import { AppButton } from '../components/AppButton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ToastNotification } from '../components/ToastNotification';
@@ -22,6 +22,10 @@ struct CameraCapturePage {
   @State toastMessage: string = '';
   @State showToast: boolean = false;
   @State lastThumbnailUri: string = '';
+  @State ellipseList: EllipseData[] = [];
+
+  private overlaySettings: RenderingContextSettings = new RenderingContextSettings(true);
+  private overlayCtx: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.overlaySettings);
 
   private formData: FormData = new FormData();
   private ellipseDataJson: string = '';
@@ -95,8 +99,39 @@ struct CameraCapturePage {
       }
     }
     const ellipseJson = params['ellipseDataJson'];
-    if (ellipseJson !== undefined) {
+    if (ellipseJson !== undefined && ellipseJson.length > 0) {
       this.ellipseDataJson = ellipseJson;
+      try {
+        const arr = JSON.parse(ellipseJson) as Array<Record<string, number>>;
+        this.ellipseList = arr.map((item: Record<string, number>) => {
+          const e = new EllipseData();
+          e.centerX  = typeof item['centerX']  === 'number' ? item['centerX']  : 0;
+          e.centerY  = typeof item['centerY']  === 'number' ? item['centerY']  : 0;
+          e.radiusX  = typeof item['radiusX']  === 'number' ? item['radiusX']  : 0;
+          e.radiusY  = typeof item['radiusY']  === 'number' ? item['radiusY']  : 0;
+          e.rotation = typeof item['rotation'] === 'number' ? item['rotation'] : 0;
+          return e;
+        });
+      } catch (err) {
+        console.error('CameraCapturePage: failed to parse ellipseData');
+      }
+    }
+  }
+
+  private drawEllipseOverlay(): void {
+    const ctx = this.overlayCtx;
+    ctx.clearRect(0, 0, ctx.width, ctx.height);
+    for (let i = 0; i < this.ellipseList.length; i++) {
+      const e = this.ellipseList[i];
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(e.centerX, e.centerY, e.radiusX, e.radiusY, e.rotation, 0, Math.PI * 2);
+      ctx.fillStyle   = 'rgba(255,107,107,0.25)';
+      ctx.fill();
+      ctx.strokeStyle = '#FF6B6B';
+      ctx.lineWidth   = 3;
+      ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -193,6 +228,14 @@ struct CameraCapturePage {
       .onDestroy(() => {
         this.releaseCamera();
       })
+
+      // Ellipse annotation overlay
+      if (this.ellipseList.length > 0) {
+        Canvas(this.overlayCtx)
+          .width('100%')
+          .height('100%')
+          .onReady(() => { this.drawEllipseOverlay(); })
+      }
 
       // Grid overlay
       if (this.showGrid) {

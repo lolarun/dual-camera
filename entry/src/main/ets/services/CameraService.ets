@@ -5,6 +5,9 @@ import { BusinessError } from '@kit.BasicServicesKit';
 
 export class CameraService {
   private static instance: CameraService | null = null;
+  private static lastBackBuffer: ArrayBuffer = new ArrayBuffer(0);
+  private static lastFrontBuffer: ArrayBuffer = new ArrayBuffer(0);
+
   private cameraManager: camera.CameraManager | null = null;
   private backCameraInput: camera.CameraInput | null = null;
   private previewOutput: camera.PreviewOutput | null = null;
@@ -12,6 +15,13 @@ export class CameraService {
   private session: camera.PhotoSession | null = null;
   private imageReceiver: image.ImageReceiver | null = null;
   private boroscopeConnected: boolean = false;
+
+  static getLastBackBuffer(): ArrayBuffer { return CameraService.lastBackBuffer; }
+  static getLastFrontBuffer(): ArrayBuffer { return CameraService.lastFrontBuffer; }
+  static clearBuffers(): void {
+    CameraService.lastBackBuffer  = new ArrayBuffer(0);
+    CameraService.lastFrontBuffer = new ArrayBuffer(0);
+  }
 
   private constructor() {}
 
@@ -88,6 +98,7 @@ export class CameraService {
           const component = await img.getComponent(image.ComponentType.JPEG);
           const buffer: ArrayBuffer = component.byteBuffer!;
           await img.release();
+          CameraService.lastBackBuffer = buffer;
           resolve(buffer);
         } catch (err) {
           reject(err);
